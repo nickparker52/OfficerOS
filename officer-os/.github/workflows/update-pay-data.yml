@@ -2,7 +2,7 @@
 
 on:
   schedule:
-    - cron: "0 13 * * 1"   # Mondays 13:00 UTC (pick any)
+    - cron: "0 13 * * 1"   # Mondays 13:00 UTC
   workflow_dispatch:
 
 jobs:
