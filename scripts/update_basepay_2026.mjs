@@ -1,5 +1,6 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
+import { fetchHtmlWithFallback } from "./lib/fetchHtml.mjs";
 
 const YEAR = 2026;
 
@@ -53,20 +54,18 @@ function normalizeTo22(nums) {
 }
 
 async function fetchHtml(url) {
-  const res = await fetch(url, {
-    redirect: "follow",
-    headers: {
-      // browser-ish headers (important for DFAS)
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Cache-Control": "no-cache",
-      "Pragma": "no-cache",
-    },
-  });
-  if (!res.ok) throw new Error(`Fetch failed ${res.status} for ${url}`);
-  return await res.text();
+  // Try DFAS first (url), then fall back to the matching MilitaryPay mirror
+  // so CI doesn't die when DFAS blocks GitHub runners (403).
+  const fallback = url
+    .replace("https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/", "https://militarypay.defense.gov/Pay/Pay-Tables/Basic-Pay/");
+
+  const { html, sourceUrl } = await fetchHtmlWithFallback([url, fallback]);
+  if (sourceUrl !== url) {
+    console.warn(`↪️  Fallback used for ${url} -> ${sourceUrl}`);
+  }
+  return html;
 }
+
 
 function parseGradeRow(text, grade) {
   // Find grade label and read the money values after it.
@@ -102,7 +101,8 @@ async function main() {
     for (const g of GRADES[key]) table[g] = parseGradeRow(text, g);
 
     if (!sanity(table)) {
-      console.warn(`⚠️ ${key}: parsed 0 numeric values. (This can happen locally; CI usually works.)`);
+      console.warn(`⚠️ ${key}: parsed 0 numeric values. (Could be a blocked fetch, layout change, or non-table content.)`);
+
     } else {
       const sample = GRADES[key].find(g => table[g].some(v => typeof v === "number"));
       console.log(`✅ ${key} sample ${sample}:`, table[sample].slice(0, 6));
