@@ -12,6 +12,10 @@ const URLS = {
   EM: "https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/EM/",
 };
 
+// Public mirror (often accessible from CI when DFAS blocks GitHub runners)
+const NAVYCS_ALL = "https://www.navycs.com/charts/2026-military-pay-chart.html";
+
+
 const HEADERS = [
   "2 or less","Over 2","Over 3","Over 4","Over 6","Over 8","Over 10","Over 12","Over 14","Over 16","Over 18",
   "Over 20","Over 22","Over 24","Over 26","Over 28","Over 30","Over 32","Over 34","Over 36","Over 38","Over 40"
@@ -54,17 +58,23 @@ function normalizeTo22(nums) {
 }
 
 async function fetchHtml(url) {
-  // Try DFAS first (url), then fall back to the matching MilitaryPay mirror
-  // so CI doesn't die when DFAS blocks GitHub runners (403).
-  const fallback = url
-    .replace("https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/", "https://militarypay.defense.gov/Pay/Pay-Tables/Basic-Pay/");
+  // Try DFAS first, then MilitaryPay mirror, then a public HTML mirror (NavyCS).
+  const militarypayMirror = url.replace(
+    "https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/",
+    "https://militarypay.defense.gov/Pay/Pay-Tables/Basic-Pay/"
+  );
 
-  const { html, sourceUrl } = await fetchHtmlWithFallback([url, fallback]);
+  const candidates = [url, militarypayMirror, NAVYCS_ALL];
+
+  const { html, sourceUrl } = await fetchHtmlWithFallback(candidates);
+
   if (sourceUrl !== url) {
-    console.warn(`↪️  Fallback used for ${url} -> ${sourceUrl}`);
+    console.warn(`↪️  Fallback used: ${url} -> ${sourceUrl}`);
   }
+
   return html;
 }
+
 
 
 function parseGradeRow(text, grade) {
