@@ -2,12 +2,17 @@
 import path from "node:path";
 import { fetchHtmlWithFallback } from "./lib/fetchHtml.mjs";
 
+
+const BEST_EFFORT = process.env.BEST_EFFORT === "1";
+
 // Multiple sources because DFAS blocks GitHub Actions runners
 const BAS_SOURCES = [
-  "https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/bas/",
-  "https://militarypay.defense.gov/Pay/Pay-Tables/BAS/",
-  "https://www.navycs.com/charts/2026-bas-rates.html"
-];
+    // NavyCS tends to be easiest to scrape when .mil blocks
+    "https://www.navycs.com/bas.html",
+    // Some mirrors that sometimes work
+    "https://militarypay.defense.gov/Pay/Pay-Tables/BAS/",
+    "https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/bas/",
+  ];
 
 function strip(html) {
   return html
@@ -22,7 +27,6 @@ function strip(html) {
 }
 
 function parseLatest(text) {
-  // Works for DFAS / MilitaryPay / NavyCS formats
   // Example: "January 1, 2026 $328.48 $476.95 $953.90"
   const re =
     /January\s+1,\s+(\d{4})\s+\$?(\d{1,3}\.\d{2})\s+\$?(\d{1,3}\.\d{2})\s+\$?(\d{1,4}\.\d{2})/i;
@@ -38,6 +42,22 @@ function parseLatest(text) {
   };
 }
 
+function assertReasonable(latest) {
+  // BAS values should be positive and in plausible ranges (monthly BAS).
+  // This prevents writing zeros if parsing fails silently.
+  const { year, officers, enlisted, basII } = latest;
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    throw new Error(`Invalid year parsed: ${year}`);
+  }
+  for (const [k, v] of Object.entries({ officers, enlisted, basII })) {
+    if (!Number.isFinite(v) || v <= 0) throw new Error(`Invalid ${k} parsed: ${v}`);
+  }
+  if (officers < 200 || officers > 600) throw new Error(`Officers BAS out of range: ${officers}`);
+  if (enlisted < 300 || enlisted > 800) throw new Error(`Enlisted BAS out of range: ${enlisted}`);
+  if (basII < 600 || basII > 1500) throw new Error(`BAS II out of range: ${basII}`);
+}
+
 async function main() {
   const { html, sourceUrl } = await fetchHtmlWithFallback(BAS_SOURCES);
   console.log(`BAS source used: ${sourceUrl}`);
@@ -46,27 +66,47 @@ async function main() {
   const latest = parseLatest(text);
 
   if (!latest) {
-    console.warn("⚠️ Could not parse BAS table — source may be blocked or layout changed");
-    return;
+    console.error("❌ Could not parse BAS table — source may be blocked or layout changed");
+    process.exit(1);
   }
 
+  // Validation gate
+  try {
+    assertReasonable(latest);
+  } catch (e) {
+    console.error(`❌ BAS validation failed: ${e.message}`);
+    process.exit(1);
+  }
+
+  // ✅ Runtime schema (matches your app)
   const out = {
-    source: sourceUrl,
+    year: latest.year,
+    effectiveDate: `${latest.year}-01-01`,
+    source: "DFAS/DoD (mirrors)",
     generatedAt: new Date().toISOString(),
-    latest,
+    sourceUrl,
+    rates: {
+      officers: latest.officers,
+      enlisted: latest.enlisted,
+      basII: latest.basII,
+    },
   };
 
   const outDir = path.join(process.cwd(), "data", "bas");
   fs.mkdirSync(outDir, { recursive: true });
 
-  const outPath = path.join(outDir, "bas.json");
+  const outPath = path.join(outDir, `${latest.year}.json`);
   fs.writeFileSync(outPath, JSON.stringify(out, null, 2), "utf8");
 
   console.log(`✅ Wrote ${outPath}`);
-  console.log("Latest BAS:", latest);
+  console.log("BAS:", out);
 }
 
-main().catch(e => {
-  console.error("❌", e);
+main().catch((e) => {
+  console.error("❌", e.message ?? e);
+  if (BEST_EFFORT) {
+    console.warn("⚠️ BEST_EFFORT=1 set — leaving existing BAS files untouched.");
+    process.exit(0);
+  }
   process.exit(1);
 });

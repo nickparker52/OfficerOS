@@ -8,15 +8,18 @@
     "start": "next start",
     "update:basepay": "node scripts/update_basepay_2026.mjs",
     "update:bas": "node scripts/update_bas.mjs",
-
     "validate:basepay": "node scripts/validate_basepay_2026.mjs",
+    "bah:zipmha": "node scripts/normalize_zipmha_2026.mjs",
+    "bah:verify": "node scripts/verify_bah_2026.mjs",
     "lint": "eslint"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
+    "exceljs": "^4.4.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
