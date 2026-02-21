@@ -82,7 +82,9 @@ export async function POST(req: NextRequest) {
 
     // FIX: Use buffer load instead of readFile (prevents ExcelJS "anchors" crash)
   const fileBuffer = await fs.readFile(templatePath);
-  await wb.xlsx.load(fileBuffer);
+
+  // ExcelJS runtime loads this fine; TS types can mismatch across Node/ExcelJS versions
+  await (wb.xlsx as any).load(fileBuffer);
   console.log("EXPORT ROUTE VERSION: buffer-load");
   // Sheet names from your screenshots:
   const start = wb.getWorksheet("Start Here");
