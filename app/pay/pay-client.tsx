@@ -41,8 +41,22 @@ function isEnlisted(g: PayGrade) {
 }
 
 function fmtUSD(v: number | null | undefined) {
-  return typeof v === "number" && Number.isFinite(v) && v > 0
-    ? `$${v.toFixed(2)}`
+  return typeof v === "number" && Number.isFinite(v) && v >= 0
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2,
+      }).format(v)
+    : "—";
+}
+
+function fmtUSD0(v: number | null | undefined) {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2,
+      }).format(v)
     : "—";
 }
 
@@ -124,6 +138,13 @@ export default function PayClient({
   const bah = getBahRate(zip, grade, dependents);
 
   const total = basePay + (bah ?? 0) + basRate;
+
+  const annual = {
+    basePay: basePay * 12,
+    bah: (bah ?? 0) * 12,
+    bas: basRate * 12,
+    total: (basePay + (bah ?? 0) + basRate) * 12,
+  };
 
   const parts = useMemo(() => {
     const p: { label: string; value: number | null; hint: string }[] = [
@@ -341,6 +362,12 @@ export default function PayClient({
             <div className="mt-2 text-4xl font-bold tracking-tight">
               {fmtUSD(total)}
             </div>
+            <div className="mt-2 flex items-baseline gap-2">
+            <div className="text-sm text-gray-600">Annual</div>
+            <div className="text-base font-semibold text-gray-900">
+              {fmtUSD0(total * 12)}
+            </div>
+          </div>
             <p className="mt-2 text-xs text-gray-500">
               Total = Base Pay + BAH + BAS
             </p>

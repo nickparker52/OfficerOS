@@ -22,6 +22,11 @@ type ExportPayload = {
   savingsTargetPct?: number; // 0.20 = 20%
   tspPct?: number;           // 0.10 = 10%
   stateTaxPct?: number;      // 0.05 = 5%
+
+  annualTotal: annual.total,
+  annualBasePay: annual.basePay,
+  annualBah: annual.bah,
+  annualBas: annual.bas,
 };
 
 function clamp(n: number, min: number, max: number) {
