@@ -35,11 +35,17 @@ export default function RootLayout({
               OfficerOS
             </a>
 
-            <nav className="flex items-center gap-6 text-sm text-gray-600">
-              <a className="hover:text-gray-900" href="/pay">
+            <nav className="flex items-center gap-6 text-sm font-medium">
+              <a href="/" className="hover:underline">
+                Home
+              </a>
+              <a href="/pay" className="hover:underline">
                 Pay
               </a>
-              <a className="hover:text-gray-900" href="/about">
+              <a href="/toolkits" className="hover:underline">
+                Toolkits
+              </a>
+              <a href="/about" className="hover:underline">
                 About
               </a>
             </nav>
