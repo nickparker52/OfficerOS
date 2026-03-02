@@ -135,7 +135,14 @@ export default function PayClient({
     [bas, year, grade]
   );
 
-  const bah = getBahRate(zip, grade, dependents);
+  const bah = useMemo(() => getBahRate(zip, grade, dependents), [zip, grade, dependents]);
+
+  const bahError = useMemo(() => {
+    if (!zip || zip.trim().length === 0) return null;
+    return bah === null
+      ? "BAH data unavailable for this ZIP (invalid ZIP, unsupported territory/APO, or missing dataset). Try a nearby ZIP."
+      : null;
+  }, [zip, bah]);
 
   const total = basePay + (bah ?? 0) + basRate;
 
@@ -325,6 +332,11 @@ export default function PayClient({
                 <p className="mt-1 text-xs text-gray-500">
                   Tip: ZIP+4 works too (e.g., 02139-1234).
                 </p>
+                {bahError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {bahError}
+                </p>
+              )}
               </div>
 
               <label className="mt-6 flex items-center gap-2 text-sm">

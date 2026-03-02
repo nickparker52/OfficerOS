@@ -38,4 +38,4 @@ requireArray(o1, "CO O-1 missing or not array");
 if (o1.length !== 22) throw new Error(`CO O-1 expected 22 columns, got ${o1.length}`);
 requireNumber(o1[0], "CO O-1 first column is not numeric");
 
-console.log("✅ Base pay dataset looks valid");
+//console.log("✅ Base pay dataset looks valid");

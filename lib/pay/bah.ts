@@ -29,8 +29,13 @@ export function getBahRate(
   withDependents: boolean
 ): number | null {
   const mha = zipToMha(zip);
-  console.log("ZIPMHA loaded keys:", Object.keys((zipMha as any)?.zipToMha ?? {}).length);
+
+  // ZIP invalid or not found in zip-to-MHA mapping
   if (!mha) return null;
+
+  // Placeholder / non-standard MHA codes (e.g., Guam 969xx -> XX499)
+  // Not present in DTMO BAH tables, so treat as unsupported.
+  if (mha.startsWith("XX")) return null;
 
   const dataset: any = withDependents ? withRates : withoutRates;
   const record = dataset?.ratesByMha?.[mha];
