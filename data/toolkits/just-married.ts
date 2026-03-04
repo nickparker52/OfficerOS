@@ -41,5 +41,17 @@ export const justMarried: Toolkit = {
       title: "Coming Next",
       text: "Dual-military scenarios, filing status tradeoffs, and a “combined pay” mode.",
     },
+
+
+    {
+    type: "actions",
+    title: "Official Links",
+    actions: [
+        { label: "milConnect (DEERS / Beneficiaries)", href: "https://milconnect.dmdc.osd.mil/" },
+        { label: "TRICARE (Official)", href: "https://www.tricare.mil/" },
+        { label: "TSP (Official)", href: "https://www.tsp.gov/" },
+    ],
+    },
   ],
+  
 };

@@ -30,5 +30,24 @@ export const juniorEnlisted: Toolkit = {
       title: "Coming Next",
       text: "Interactive “Barracks vs apartment” decision tool + a starter savings builder.",
     },
+
+
+    {
+    type: "actions",
+    title: "OfficerOS Actions",
+    actions: [
+        { label: "Pay Calculator", href: "/pay", note: "Download the budget sheet" },
+        { label: "Budget Planner", href: "/toolkits/budget-planner", note: "Build your baseline plan" },
+        { label: "TSP & Retirement", href: "/toolkits/retirement-tsp", note: "Simple contribution plan" },
+    ],
+    },
+    {
+    type: "actions",
+    title: "Official Links",
+    actions: [
+        { label: "TSP (Official)", href: "https://www.tsp.gov/" },
+        { label: "DFAS (Pay Info)", href: "https://www.dfas.mil/" },
+    ],
+    },
   ],
 };

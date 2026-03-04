@@ -83,6 +83,39 @@ export default function ToolkitPage({ toolkit }: { toolkit: Toolkit }) {
     }
 
     if (sec.type === "actions") {
+
+        // inside: if (sec.type === "actions") { ... }
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+    {sec.actions.map((a) => {
+        const isExternal = a.href.startsWith("http");
+        const CardInner = (
+        <>
+            <div className="font-semibold">{a.label}</div>
+            {a.note ? <div className="mt-1 text-sm text-gray-600">{a.note}</div> : null}
+            <div className="mt-2 text-sm">Open →</div>
+        </>
+        );
+
+        const className =
+        "rounded-2xl border bg-white p-4 shadow-sm hover:shadow transition";
+
+        return isExternal ? (
+        <a
+            key={a.href + a.label}
+            href={a.href}
+            target="_blank"
+            rel="noreferrer"
+            className={className}
+        >
+            {CardInner}
+        </a>
+        ) : (
+        <Link key={a.href + a.label} href={a.href} className={className}>
+            {CardInner}
+        </Link>
+        );
+    })}
+    </div>
       return (
         <section key={sec.title} className="rounded-3xl border bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">{sec.title}</h2>
