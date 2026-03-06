@@ -41,6 +41,9 @@ export default function RootLayout({
               <Link href="/pay" className="hover:underline">
                 Pay
               </Link>
+              <Link href="/housing" className="hover:underline">
+                Housing
+              </Link>
               <Link href="/toolkits" className="hover:underline">
                 Toolkits
               </Link>
