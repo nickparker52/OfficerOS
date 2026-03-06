@@ -36,6 +36,9 @@ const YOS_OPTIONS = [
   { label: "Over 40", value: 40 },
 ] as const;
 
+const SOCIAL_SECURITY_RATE = 0.062;
+const MEDICARE_RATE = 0.0145;
+
 function isEnlisted(g: PayGrade) {
   return g.startsWith("E-");
 }
@@ -119,11 +122,11 @@ export default function PayClient({
   const [dependents, setDependents] = useState<boolean>(false);
 
   // “Premium export” knobs (hidden for now, but ready)
-  const [tspPct] = useState<number>(0.10);        // 10% default
-  const [savingsTargetPct] = useState<number>(0.20); // 20% default
-  const [housingTargetPct] = useState<number>(1.0);  // 100% of BAH
-  const [foodTargetPct] = useState<number>(1.0);     // 100% of BAS
-  const [stateTaxPct] = useState<number>(0);      // 0 by default (user can edit in sheet)
+  const [tspPct] = useState<number>(0.10);
+  const [savingsTargetPct] = useState<number>(0.20);
+  const [housingTargetPct] = useState<number>(1.0);
+  const [foodTargetPct] = useState<number>(1.0);
+  const [stateTaxPct] = useState<number>(0);
 
   const basePay = useMemo(
     () => getBasePayFromData(basepay, year, grade, yos),
@@ -144,13 +147,25 @@ export default function PayClient({
       : null;
   }, [zip, bah]);
 
-  const total = basePay + (bah ?? 0) + basRate;
+  const taxableIncomeMonthly = basePay;
+  const nonTaxableIncomeMonthly = (bah ?? 0) + basRate;
+  const total = taxableIncomeMonthly + nonTaxableIncomeMonthly;
+
+  const estimatedSocialSecurity = taxableIncomeMonthly * SOCIAL_SECURITY_RATE;
+  const estimatedMedicare = taxableIncomeMonthly * MEDICARE_RATE;
+  const estimatedFicaTotal = estimatedSocialSecurity + estimatedMedicare;
+
+  const estimatedTakeHomeBeforeWithholding = total - estimatedFicaTotal;
 
   const annual = {
     basePay: basePay * 12,
     bah: (bah ?? 0) * 12,
     bas: basRate * 12,
-    total: (basePay + (bah ?? 0) + basRate) * 12,
+    taxableIncome: taxableIncomeMonthly * 12,
+    nonTaxableIncome: nonTaxableIncomeMonthly * 12,
+    fica: estimatedFicaTotal * 12,
+    total: total * 12,
+    takeHomeBeforeWithholding: estimatedTakeHomeBeforeWithholding * 12,
   };
 
   const parts = useMemo(() => {
@@ -186,7 +201,6 @@ export default function PayClient({
         basMonthly: basRate,
         otherIncomeMonthly: 0,
 
-        // Hybrid “smart export” defaults (user can edit inside the sheet)
         housingTargetPct,
         foodTargetPct,
         savingsTargetPct,
@@ -225,14 +239,14 @@ export default function PayClient({
 
   return (
     <main className="space-y-10">
-      <header className="rounded-3xl border bg-white p-8 shadow-sm">
+      <header className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
               Pay Calculator
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Monthly pay components (Base Pay + BAH + BAS). Taxes not included.
+              Monthly pay components with a clear taxable vs non-taxable breakdown.
             </p>
           </div>
 
@@ -255,8 +269,7 @@ export default function PayClient({
       </header>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Inputs */}
-        <section className="rounded-3xl border bg-white p-8 shadow-sm">
+        <section className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-semibold">Inputs</h2>
           <p className="mt-1 text-sm text-gray-600">
             Set your year, grade, and time in service.
@@ -333,10 +346,10 @@ export default function PayClient({
                   Tip: ZIP+4 works too (e.g., 02139-1234).
                 </p>
                 {bahError && (
-                <p className="mt-2 text-sm text-red-600">
-                  {bahError}
-                </p>
-              )}
+                  <p className="mt-2 text-sm text-red-600">
+                    {bahError}
+                  </p>
+                )}
               </div>
 
               <label className="mt-6 flex items-center gap-2 text-sm">
@@ -360,14 +373,13 @@ export default function PayClient({
           </div>
         </section>
 
-        {/* Results */}
-        <section className="rounded-3xl border bg-white p-8 shadow-sm">
+        <section className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-semibold">Results</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Monthly totals. Taxes not included.
+            Monthly totals with a clearer take-home picture.
           </p>
 
-          <div className="mt-6 rounded-3xl border bg-white p-8 shadow-sm">
+          <div className="mt-6 rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
             <div className="text-sm text-gray-600">
               Estimated monthly total
             </div>
@@ -375,13 +387,63 @@ export default function PayClient({
               {fmtUSD(total)}
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-            <div className="text-sm text-gray-600">Annual</div>
-            <div className="text-base font-semibold text-gray-900">
-              {fmtUSD0(total * 12)}
+              <div className="text-sm text-gray-600">Annual</div>
+              <div className="text-base font-semibold text-gray-900">
+                {fmtUSD0(annual.total)}
+              </div>
             </div>
-          </div>
             <p className="mt-2 text-xs text-gray-500">
               Total = Base Pay + BAH + BAS
+            </p>
+
+            <p className="mt-2 text-xs text-gray-500">
+              Includes {fmtUSD(nonTaxableIncomeMonthly)} in generally non-taxable allowances (BAH + BAS).
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-medium">Taxable Income</div>
+              <div className="mt-1 text-xs text-gray-500">Usually just base pay for this calculator.</div>
+              <div className="mt-3 text-2xl font-bold">{fmtUSD(taxableIncomeMonthly)}</div>
+              <div className="mt-1 text-xs text-gray-500">Annual {fmtUSD0(annual.taxableIncome)}</div>
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-medium">Non-Taxable Income</div>
+              <div className="mt-1 text-xs text-gray-500">BAH + BAS are generally non-taxable allowances.</div>
+              <div className="mt-3 text-2xl font-bold">{fmtUSD(nonTaxableIncomeMonthly)}</div>
+              <div className="mt-1 text-xs text-gray-500">Annual {fmtUSD0(annual.nonTaxableIncome)}</div>
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-medium">Estimated FICA</div>
+              <div className="mt-1 text-xs text-gray-500">Social Security (6.2%) + Medicare (1.45%) on base pay.</div>
+              <div className="mt-3 text-2xl font-bold">{fmtUSD(estimatedFicaTotal)}</div>
+              <div className="mt-1 text-xs text-gray-500">
+                SS: {fmtUSD(estimatedSocialSecurity)} · Medicare: {fmtUSD(estimatedMedicare)}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-medium">Income After FICA</div>
+              <div className="mt-1 text-xs text-gray-500">
+                Before federal/state withholding, TSP, SGLI, and other deductions.
+              </div>
+              <div className="mt-3 text-2xl font-bold">{fmtUSD(estimatedTakeHomeBeforeWithholding)}</div>
+              <div className="mt-1 text-xs text-gray-500">
+                Annual {fmtUSD0(annual.takeHomeBeforeWithholding)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border bg-gray-50 p-4 text-xs text-gray-600">
+            <div className="font-medium text-gray-900">Important note</div>
+            <p className="mt-1">
+              This view shows a cleaner split between taxable and non-taxable military pay.
+              Base pay is taxable. BAH and BAS are generally non-taxable. Actual take-home pay
+              depends on federal withholding, state of legal residence, TSP contributions, SGLI,
+              and any special pays or deductions on your LES.
             </p>
           </div>
 
@@ -426,6 +488,52 @@ export default function PayClient({
           </div>
         </section>
       </div>
+
+      <section className="rounded-3xl border bg-gray-50 p-8">
+      <h2 className="text-lg font-semibold">Understanding Your Military Pay (LES)</h2>
+      <p className="mt-2 text-sm text-gray-600">
+        The Leave and Earnings Statement (LES) is the military version of a pay stub.
+        It shows your pay, allowances, taxes, and deductions each month.
+      </p>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+        <div className="rounded-2xl border p-4">
+          <div className="font-medium">Base Pay</div>
+          <p className="mt-1 text-sm text-gray-600">
+            Your primary salary based on rank and years of service. Base pay is taxable.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border p-4">
+          <div className="font-medium">BAH (Housing Allowance)</div>
+          <p className="mt-1 text-sm text-gray-600">
+            A housing allowance based on duty location, rank, and dependent status.
+            BAH is generally non-taxable.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border p-4">
+          <div className="font-medium">BAS (Food Allowance)</div>
+          <p className="mt-1 text-sm text-gray-600">
+            BAS is a food allowance for service members and is usually non-taxable.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border p-4">
+          <div className="font-medium">Deductions</div>
+          <p className="mt-1 text-sm text-gray-600">
+            Deductions include taxes, SGLI life insurance, TSP retirement contributions,
+            and other allotments.
+          </p>
+        </div>
+
+      </div>
+
+      <p className="mt-6 text-xs text-gray-500">
+        Official pay information is available through DFAS and your LES.
+      </p>
+    </section>
     </main>
   );
 }

@@ -8,7 +8,7 @@ export default function AboutPage() {
       </p>
 
       <p>
-        We’re two Army lieutenants who started learning about military finances
+        We’re two lieutenants who started learning about military finances
         the same way most people do: by trying to figure it out ourselves.
       </p>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OfficerOS",
-  description: "Military pay & benefits tools — accurate, visual, and simple.",
+  description: "Military pay calculator, BAH lookup, and financial tools for service members.",
 };
 
 export default function RootLayout({
@@ -28,37 +29,55 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} bg-gray-50 text-gray-900 antialiased`}
       >
         <div className="mx-auto max-w-6xl px-6">
-          
-          {/* Header */}
           <header className="flex items-center justify-between py-6">
-            <a href="/" className="text-xl font-semibold tracking-tight">
+            <Link href="/" className="text-xl font-semibold tracking-tight">
               OfficerOS
-            </a>
+            </Link>
 
             <nav className="flex items-center gap-6 text-sm font-medium">
-              <a href="/" className="hover:underline">
+              <Link href="/" className="hover:underline">
                 Home
-              </a>
-              <a href="/pay" className="hover:underline">
+              </Link>
+              <Link href="/pay" className="hover:underline">
                 Pay
-              </a>
-              <a href="/toolkits" className="hover:underline">
+              </Link>
+              <Link href="/toolkits" className="hover:underline">
                 Toolkits
-              </a>
-              <a href="/about" className="hover:underline">
+              </Link>
+              <Link href="/about" className="hover:underline">
                 About
-              </a>
+              </Link>
+              <Link href="/contact" className="hover:underline">
+                Contact
+              </Link>
             </nav>
           </header>
 
-          {/* Main Content */}
           <main className="pb-16">{children}</main>
 
-          {/* Footer */}
           <footer className="border-t py-8 text-xs text-gray-500">
-            © {new Date().getFullYear()} OfficerOS. Not official — verify with DFAS/DoD.
-          </footer>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                © {new Date().getFullYear()} OfficerOS. Not affiliated with the U.S. Department of Defense.
+                <br />
+                For educational purposes only — verify financial decisions with DFAS and official sources.
+              </div>
 
+              <div className="flex items-center gap-4">
+                <Link href="/contact" className="hover:underline">
+                  Contact
+                </Link>
+                <a
+                  href="https://buymeacoffee.com/YOURNAME"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:underline"
+                >
+                  Buy us a coffee
+                </a>
+              </div>
+            </div>
+          </footer>
         </div>
       </body>
     </html>
