@@ -118,7 +118,7 @@ export default function PayClient({
   );
   const [grade, setGrade] = useState<PayGrade>("O-1");
   const [yos, setYos] = useState<number>(0);
-  const [zip, setZip] = useState<string>("02139");
+  const [zip, setZip] = useState<string>("");
   const [dependents, setDependents] = useState<boolean>(false);
 
   // “Premium export” knobs (hidden for now, but ready)
@@ -256,21 +256,21 @@ export default function PayClient({
             </span>
 
             <button
-              type="button"
-              onClick={downloadBudgetXlsx}
-              disabled={exporting}
-              className="rounded-full border bg-white px-3 py-1 text-xs text-gray-800 hover:bg-gray-50 disabled:opacity-60"
-              title="Downloads an Excel budget workbook pre-filled with your pay + hybrid suggested plan."
-            >
-              {exporting ? "Preparing export…" : "Download Budget Sheet (.xlsx)"}
-            </button>
+            type="button"
+            onClick={downloadBudgetXlsx}
+            disabled={exporting}
+            className="rounded-full border border-black bg-black px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+            title="Downloads an Excel budget workbook pre-filled with your pay + hybrid suggested plan."
+          >
+            {exporting ? "Preparing export…" : "Download Budget Sheet"}
+          </button>
           </div>
         </div>
       </header>
 
       <div className="grid gap-6 md:grid-cols-2">
         <section className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
-          <h2 className="text-lg font-semibold">Inputs</h2>
+          <h2 className="text-lg font-semibold">Inputs (Start Here!)</h2>
           <p className="mt-1 text-sm text-gray-600">
             Set your year, grade, and time in service.
           </p>
@@ -326,9 +326,7 @@ export default function PayClient({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-500">
-                Uses DFAS pay steps (e.g., &lt;2, Over 2, Over 3…).
-              </p>
+              
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
@@ -344,6 +342,10 @@ export default function PayClient({
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Tip: ZIP+4 works too (e.g., 02139-1234).
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Note: Many junior enlisted members living in barracks or government housing do not receive BAH.
+                  Verify with your LES.
                 </p>
                 {bahError && (
                   <p className="mt-2 text-sm text-red-600">
@@ -417,7 +419,7 @@ export default function PayClient({
             </div>
 
             <div className="rounded-2xl border p-4">
-              <div className="text-sm font-medium">Estimated FICA</div>
+              <div className="text-sm font-medium">Estimated FICA Tax</div>
               <div className="mt-1 text-xs text-gray-500">Social Security (6.2%) + Medicare (1.45%) on base pay.</div>
               <div className="mt-3 text-2xl font-bold">{fmtUSD(estimatedFicaTotal)}</div>
               <div className="mt-1 text-xs text-gray-500">
@@ -494,6 +496,10 @@ export default function PayClient({
       <p className="mt-2 text-sm text-gray-600">
         The Leave and Earnings Statement (LES) is the military version of a pay stub.
         It shows your pay, allowances, taxes, and deductions each month.
+      </p>
+
+      <p className="mt-2 text-xs text-gray-500">
+        New to military pay? See <a href="/terms" className="underline">Terms Explained</a>.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">

@@ -40,7 +40,7 @@ function getHousingRating(housingPctOfBah: number) {
 
 export default function HousingAffordabilityPage() {
   const [grade, setGrade] = useState<PayGrade>("O-1");
-  const [zip, setZip] = useState("02139");
+  const [zip, setZip] = useState("");
   const [dependents, setDependents] = useState(false);
 
   const [rent, setRent] = useState(3200);
